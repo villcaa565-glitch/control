@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Quincenal Permanente - Delizia</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        body {
+            background-color: #f3f4f6;
+            padding: 10px;
+            color: #333;
+        }
+        @media (max-width: 380px) {
+            body { padding: 6px; }
+            .container { padding: 10px; }
+        }
+        .container {
+            max-width: 100%;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-top: 5px solid #004b93;
+        }
+        h2 {
+            text-align: center;
+            color: #004b93;
+            margin-bottom: 5px;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        .sub {
+            text-align: center;
+            color: #da291c;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        .estado-conexion {
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 10px;
+            color: #888;
+        }
+        .config-quincena, .config-afiliado {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .config-quincena label, .config-afiliado label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #004b93;
+        }
+        .config-quincena input, .config-afiliado input {
+            padding: 10px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 16px; /* evita el zoom automático de iOS al enfocar */
+        }
+        .fila-agregar {
+            display: flex;
+            gap: 8px;
+        }
+        .fila-agregar input {
+            flex: 1;
+            min-width: 0; /* permite que el input se achique en pantallas angostas */
+        }
+        .btn-agregar {
+            padding: 12px 16px;
+            background-color: #004b93;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 15px;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+            font-size: 13px;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            text-align: center;
+            padding: 6px 3px;
+        }
+        th {
+            background-color: #005cb9;
+            color: white;
+            font-weight: 600;
+        }
+        .fecha-header {
+            font-size: 11px;
+            display: block;
+            color: #ffdad6;
+            font-weight: normal;
+        }
+        th:first-child, td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #f8f9fa;
+            font-weight: bold;
+            text-align: left;
+            padding-left: 10px;
+            min-width: 160px;
+            z-index: 1;
+            border-right: 2px solid #004b93;
+        }
+        th:first-child {
+            background-color: #004b93;
+            z-index: 2;
+        }
+        td input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 16px; /* evita el zoom automático de iOS al enfocar */
+            padding: 10px 0;
+            font-weight: 500;
+        }
+        td input:focus {
+            outline: 2px solid #da291c;
+            background-color: #fff5f5;
+        }
+        .total-col {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #da291c;
+            min-width: 80px;
+        }
+        .sin-afiliados {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background-color: #1a8f4c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:active {
+            background-color: #14713b;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1a8f4c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        .toast.mostrar {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Delizia</h2>
+    <div class="sub">Control de Leche - Sincronizado en la Nube</div>
+    <div class="estado-conexion" id="estadoConexion">Conectando...</div>
+
+   
+
+    <!-- Selector de fecha para mover la vista de la quincena -->
+    <div class="config-quincena">
+        <label for="fechaInicio">Ver quincena a partir del día:</label>
+        <input type="date" id="fechaInicio">
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr id="encabezadoDias">
+                    <th>Afiliado</th>
+                    <!-- Los 15 días dinámicos se insertan aquí -->
+                    <th>Total Qna.</th>
+                </tr>
+            </thead>
+            <tbody id="tablaCuerpo">
+                <!-- Filas de afiliados -->
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn-primary" id="btnGuardar">Guardar</button>
+</div>
+
+<div class="toast" id="toast">Guardado ✓</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+        getDatabase, ref, push, set, update, onValue
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    // Configuración de Firebase (proyecto del usuario)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDYMmBXRRmZwi60b9vCVZNPQFFByKhzieQ",
+        authDomain: "base-de-datos-748e3.firebaseapp.com",
+        databaseURL: "https://base-de-datos-748e3-default-rtdb.firebaseio.com",
+        projectId: "base-de-datos-748e3",
+        storageBucket: "base-de-datos-748e3.firebasestorage.app",
+        messagingSenderId: "355021101960",
+        appId: "1:355021101960:web:93f643464410fa3573f83d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const afiliadosRef = ref(db, 'afiliados');   // { id: "Nombre" }
+    const registrosRef = ref(db, 'registros');   // { id: { "AAAA-MM-DD": "litros" } }
+
+    const estadoConexion = document.getElementById('estadoConexion');
+    const totalDias = 15;
+    const tablaCuerpo = document.getElementById('tablaCuerpo');
+    const encabezadoDias = document.getElementById('encabezadoDias');
+    const inputFechaInicio = document.getElementById('fechaInicio');
+    const inputNuevoAfiliado = document.getElementById('nombreNuevoAfiliado');
+    const toast = document.getElementById('toast');
+
+    // Helper: formatea un objeto Date a "AAAA-MM-DD" usando componentes LOCALES
+    // (evitar toISOString(), que convierte a UTC y puede desfasar el día
+    // según la hora y el huso horario del usuario).
+    function formatearFechaLocal(fecha) {
+        const yyyy = fecha.getFullYear();
+        const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+        const dd = String(fecha.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Los afiliados pueden llegar como texto simple (altas rápidas hechas
+    // desde esta misma app) o como objeto completo (inscritos desde la app
+    // de "Registro de Afiliados", con nombre/paterno/materno separados).
+    function obtenerNombreAfiliado(data) {
+        if (typeof data === 'string') return data;
+        if (data && typeof data === 'object') {
+            return [data.nombre, data.paterno, data.materno].filter(Boolean).join(' ') || '(sin nombre)';
+        }
+        return '(sin nombre)';
+    }
+
+    function mostrarToast(mensaje) {
+        toast.textContent = mensaje;
+        toast.classList.add('mostrar');
+        setTimeout(() => toast.classList.remove('mostrar'), 1800);
+    }
+
+    // Fecha de visualización (esto sigue siendo local a cada dispositivo,
+    // cada quien puede estar viendo una quincena distinta)
+    let fechaVista = localStorage.getItem('deliziaFechaVista');
+    if (!fechaVista) {
+        fechaVista = formatearFechaLocal(new Date());
+        localStorage.setItem('deliziaFechaVista', fechaVista);
+    }
+    inputFechaInicio.value = fechaVista;
+
+    // Estado en memoria, alimentado en tiempo real desde Firebase
+    let afiliados = {};   // { id: "Nombre" }
+    let dbLeche = {};     // { id: { "AAAA-MM-DD": "litros" } }
+    let fechasActuales = [];
+    let estructuraLista = false; // evita reconstruir la tabla antes de tener afiliados
+
+    function calcularFechasQuincena() {
+        fechasActuales = [];
+        const fechaBase = new Date(inputFechaInicio.value + "T00:00:00");
+
+        for (let i = 0; i < totalDias; i++) {
+            const nuevaFecha = new Date(fechaBase);
+            nuevaFecha.setDate(fechaBase.getDate() + i);
+            fechasActuales.push({
+                objetoFecha: nuevaFecha,
+                isoString: formatearFechaLocal(nuevaFecha)
+            });
+        }
+    }
+
+    function generarCabeceras() {
+        while (encabezadoDias.children.length > 2) {
+            encabezadoDias.removeChild(encabezadoDias.children[1]);
+        }
+
+        const nombresDiasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+        fechasActuales.forEach(f => {
+            const th = document.createElement('th');
+            const diaSemana = nombresDiasSemana[f.objetoFecha.getDay()];
+            const diaMes = f.objetoFecha.getDate();
+            const mes = f.objetoFecha.getMonth() + 1;
+            const anio = f.objetoFecha.getFullYear();
+
+            th.innerHTML = `${diaSemana}<span class="fecha-header">${diaMes}/${mes}/${anio}</span>`;
+            encabezadoDias.insertBefore(th, encabezadoDias.lastElementChild);
+        });
+    }
+
+    function construirTabla() {
+        tablaCuerpo.innerHTML = "";
+
+        const idsAfiliados = Object.keys(afiliados);
+
+        if (idsAfiliados.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = totalDias + 2;
+            td.className = "sin-afiliados";
+            td.textContent = "Todavía no hay afiliados inscritos. Agrega uno arriba.";
+            tr.appendChild(td);
+            tablaCuerpo.appendChild(tr);
+            return;
+        }
+
+        idsAfiliados.forEach(id => {
+            const nombre = obtenerNombreAfiliado(afiliados[id]);
+            const tr = document.createElement('tr');
+
+            const tdAfi = document.createElement('td');
+            tdAfi.textContent = nombre;
+            tr.appendChild(tdAfi);
+
+            let sumaQuincena = 0;
+            const registrosAfiliado = dbLeche[id] || {};
+
+            fechasActuales.forEach(f => {
+                const tdDia = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = "number";
+                input.step = "0.1";
+                input.min = "0"; // evita registrar litros negativos
+                input.placeholder = "0";
+
+                const valorFecha = registrosAfiliado[f.isoString] || "";
+                input.value = valorFecha;
+
+                if (valorFecha) {
+                    sumaQuincena += parseFloat(valorFecha);
+                }
+
+                input.addEventListener('input', function() {
+                    if (this.value !== "" && parseFloat(this.value) < 0) {
+                        this.value = "0";
+                    }
+                    // Actualiza caché local al instante (para que el total no espere la red)
+                    if (!dbLeche[id]) dbLeche[id] = {};
+                    dbLeche[id][f.isoString] = this.value;
+
+                    // Escribe a Firebase por fecha exacta, sin tocar los demás días
+                    set(ref(db, `registros/${id}/${f.isoString}`), this.value)
+                        .catch(err => {
+                            console.error(err);
+                            estadoConexion.textContent = "⚠ No se pudo guardar, revisa tu conexión";
+                        });
+
+                    actualizarTotales();
+                });
+
+                tdDia.appendChild(input);
+                tr.appendChild(tdDia);
+            });
+
+            const tdTotal = document.createElement('td');
+            tdTotal.className = "total-col";
+            tdTotal.id = `total-${id}`;
+            tdTotal.textContent = sumaQuincena > 0 ? sumaQuincena.toFixed(1) : "0.0";
+            tr.appendChild(tdTotal);
+
+            tablaCuerpo.appendChild(tr);
+        });
+    }
+
+    function actualizarTotales() {
+        Object.keys(afiliados).forEach(id => {
+            let suma = 0;
+            const registrosAfiliado = dbLeche[id] || {};
+            fechasActuales.forEach(f => {
+                if (registrosAfiliado[f.isoString]) {
+                    suma += parseFloat(registrosAfiliado[f.isoString]);
+                }
+            });
+            const celdaTotal = document.getElementById(`total-${id}`);
+            if (celdaTotal) {
+                celdaTotal.textContent = suma > 0 ? suma.toFixed(1) : "0.0";
+            }
+        });
+    }
+
+    function renderizarTodo() {
+        calcularFechasQuincena();
+        generarCabeceras();
+        construirTabla();
+    }
+
+    // --- Escucha en tiempo real de Firebase ---
+
+    // Cambios en la lista de afiliados (agregar uno nuevo reconstruye la tabla,
+    // y por eso aparece automáticamente en cualquier dispositivo abierto)
+    onValue(afiliadosRef, (snapshot) => {
+        afiliados = snapshot.val() || {};
+        estructuraLista = true;
+        renderizarTodo();
+        estadoConexion.textContent = "Conectado ✓ (sincronizado en la nube)";
+    }, (error) => {
+        console.error(error);
+        estadoConexion.textContent = "⚠ Sin conexión a la base de datos";
+    });
+
+    // Cambios en los registros de litros: solo actualiza el caché local y
+    // los totales, sin reconstruir los inputs (para no interrumpir mientras
+    // alguien está escribiendo)
+    onValue(registrosRef, (snapshot) => {
+        dbLeche = snapshot.val() || {};
+        if (estructuraLista) actualizarTotales();
+    });
+
+    // --- Eventos de la interfaz ---
+
+    inputFechaInicio.addEventListener('change', function() {
+        localStorage.setItem('deliziaFechaVista', this.value);
+        renderizarTodo();
+    });
+
+    document.getElementById('btnAgregarAfiliado').addEventListener('click', function() {
+        const nombre = inputNuevoAfiliado.value.trim();
+        if (!nombre) {
+            mostrarToast("Escribe un nombre primero");
+            return;
+        }
+        const nuevoRef = push(afiliadosRef);
+        set(nuevoRef, { nombre: nombre, paterno: '', materno: '' })
+            .then(() => {
+                inputNuevoAfiliado.value = "";
+                mostrarToast(`"${nombre}" inscrito ✓`);
+            })
+            .catch(err => {
+                console.error(err);
+                mostrarToast("⚠ No se pudo inscribir");
+            });
+    });
+
+    inputNuevoAfiliado.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('btnAgregarAfiliado').click();
+        }
+    });
+
+    document.getElementById('btnGuardar').addEventListener('click', function() {
+        // Los litros ya se guardan en Firebase en cada tecla; este botón
+        // reafirma el guardado completo de lo que se ve en pantalla y confirma al usuario.
+        const actualizaciones = {};
+        Object.keys(afiliados).forEach(id => {
+            fechasActuales.forEach(f => {
+                const valor = (dbLeche[id] && dbLeche[id][f.isoString]) || "";
+                actualizaciones[`registros/${id}/${f.isoString}`] = valor;
+            });
+        });
+        update(ref(db), actualizaciones)
+            .then(() => mostrarToast("Guardado ✓"))
+            .catch(err => {
+                console.error(err);
+                mostrarToast("⚠ No se pudo guardar");
+            });
+    });
+</script>
+
+</body>
+</html>

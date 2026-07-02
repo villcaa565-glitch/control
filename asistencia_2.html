@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Asistencia - Delizia</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    body {
+        background-color: #f3f4f6;
+        padding: 10px;
+        color: #333;
+        padding-bottom: 30px;
+    }
+    @media (max-width: 380px) {
+        body { padding: 6px; }
+        .container { padding: 10px; }
+    }
+    .container {
+        max-width: 100%;
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-top: 5px solid #004b93;
+    }
+    h2 {
+        text-align: center;
+        color: #004b93;
+        margin-bottom: 5px;
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
+    .sub {
+        text-align: center;
+        color: #da291c;
+        font-weight: bold;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+    .estado-conexion {
+        text-align: center;
+        font-size: 12px;
+        margin-bottom: 10px;
+        color: #888;
+    }
+    .config-fecha {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .config-fecha label {
+        font-size: 13px;
+        font-weight: bold;
+        color: #004b93;
+    }
+    .fila-fecha {
+        display: flex;
+        gap: 8px;
+    }
+    .fila-fecha input {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        font-size: 16px; /* evita el zoom automático de iOS al enfocar */
+    }
+    .btn-hoy {
+        padding: 10px 14px;
+        background-color: #004b93;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .resumen {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+    .resumen .stat {
+        flex: 1;
+        min-width: 70px;
+        text-align: center;
+        padding: 10px 4px;
+        border-radius: 6px;
+        color: white;
+    }
+    .resumen .presentes { background-color: #1a8f4c; }
+    .resumen .permisos { background-color: #e08e0b; }
+    .resumen .ausentes { background-color: #da291c; }
+    .resumen .total { background-color: #004b93; }
+    .resumen .stat .num {
+        font-size: 1.3rem;
+        font-weight: bold;
+        display: block;
+    }
+    .resumen .stat .lbl {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+    .buscar {
+        width: 100%;
+        padding: 12px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+    .acciones-masivas {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+    .acciones-masivas button {
+        flex: 1;
+        padding: 10px 4px;
+        border: none;
+        border-radius: 6px;
+        font-size: 10.5px;
+        font-weight: bold;
+        cursor: pointer;
+        color: white;
+    }
+    .btn-todos-presentes { background-color: #1a8f4c; }
+    .btn-todos-permiso { background-color: #e08e0b; }
+    .btn-todos-ausentes { background-color: #da291c; }
+    .lista {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .fila-afiliado {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        background: #fff;
+    }
+    .fila-afiliado.presente {
+        border-left: 5px solid #1a8f4c;
+        background-color: #f2fbf6;
+    }
+    .fila-afiliado.permiso {
+        border-left: 5px solid #e08e0b;
+        background-color: #fef8ec;
+    }
+    .fila-afiliado.ausente {
+        border-left: 5px solid #da291c;
+        background-color: #fff5f5;
+    }
+    .info-afiliado {
+        flex: 1;
+        min-width: 0;
+    }
+    .info-afiliado .nombre {
+        font-weight: bold;
+        color: #333;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .info-afiliado .detalle {
+        font-size: 11px;
+        color: #888;
+    }
+    .segmentado {
+        flex-shrink: 0;
+        display: flex;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+    .segmentado button {
+        border: none;
+        background: #f1f2f4;
+        color: #888;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 9px 8px;
+        cursor: pointer;
+    }
+    .segmentado button.activo.estado-presente { background-color: #1a8f4c; color: white; }
+    .segmentado button.activo.estado-permiso { background-color: #e08e0b; color: white; }
+    .segmentado button.activo.estado-ausente { background-color: #da291c; color: white; }
+    .sin-afiliados {
+        text-align: center;
+        padding: 20px;
+        color: #888;
+        font-size: 14px;
+    }
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #1a8f4c;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: bold;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 10;
+    }
+    .toast.mostrar {
+        opacity: 1;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Delizia</h2>
+    <div class="sub">Control de Asistencia - Sincronizado en la Nube</div>
+    <div class="estado-conexion" id="estadoConexion">Conectando...</div>
+
+    <div class="config-fecha">
+        <label for="fechaAsistencia">Fecha de asistencia:</label>
+        <div class="fila-fecha">
+            <input type="date" id="fechaAsistencia">
+            <button class="btn-hoy" id="btnHoy">Hoy</button>
+        </div>
+    </div>
+
+    <div class="resumen">
+        <div class="stat presentes">
+            <span class="num" id="numPresentes">0</span>
+            <span class="lbl">Presentes</span>
+        </div>
+        <div class="stat permisos">
+            <span class="num" id="numPermisos">0</span>
+            <span class="lbl">Permiso</span>
+        </div>
+        <div class="stat ausentes">
+            <span class="num" id="numAusentes">0</span>
+            <span class="lbl">Ausentes</span>
+        </div>
+        <div class="stat total">
+            <span class="num" id="numTotal">0</span>
+            <span class="lbl">Afiliados</span>
+        </div>
+    </div>
+
+    <input class="buscar" id="buscar" placeholder="🔍 Buscar por nombre o CI">
+
+    <div class="acciones-masivas">
+        <button class="btn-todos-presentes" id="btnTodosPresentes">✓ Todos presentes</button>
+        <button class="btn-todos-permiso" id="btnTodosPermiso">🕐 Todos con permiso</button>
+        <button class="btn-todos-ausentes" id="btnTodosAusentes">✕ Todos ausentes</button>
+    </div>
+
+    <div class="lista" id="lista">
+        <div class="sin-afiliados">Cargando afiliados...</div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Guardado ✓</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+        getDatabase, ref, set, update, onValue
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    // Mismo proyecto de Firebase que usan las demás apps de Delizia, para
+    // compartir la lista de afiliados automáticamente.
+    const firebaseConfig = {
+        apiKey: "AIzaSyDYMmBXRRmZwi60b9vCVZNPQFFByKhzieQ",
+        authDomain: "base-de-datos-748e3.firebaseapp.com",
+        databaseURL: "https://base-de-datos-748e3-default-rtdb.firebaseio.com",
+        projectId: "base-de-datos-748e3",
+        storageBucket: "base-de-datos-748e3.firebasestorage.app",
+        messagingSenderId: "355021101960",
+        appId: "1:355021101960:web:93f643464410fa3573f83d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const afiliadosRef = ref(db, 'afiliados'); // { id: { nombre, paterno, materno, ci, ... } o "Nombre" }
+    // Asistencia se guarda separada por fecha: asistencia/{AAAA-MM-DD}/{id} = { estado, hora, motivo }
+    // estado puede ser: "presente" | "permiso" | "ausente"
+
+    const estadoConexion = document.getElementById('estadoConexion');
+    const inputFecha = document.getElementById('fechaAsistencia');
+    const btnHoy = document.getElementById('btnHoy');
+    const inputBuscar = document.getElementById('buscar');
+    const listaDiv = document.getElementById('lista');
+    const numPresentes = document.getElementById('numPresentes');
+    const numPermisos = document.getElementById('numPermisos');
+    const numAusentes = document.getElementById('numAusentes');
+    const numTotal = document.getElementById('numTotal');
+    const toast = document.getElementById('toast');
+
+    function formatearFechaLocal(fecha) {
+        const yyyy = fecha.getFullYear();
+        const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+        const dd = String(fecha.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function horaActual() {
+        const d = new Date();
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // Los afiliados pueden llegar como texto simple o como objeto completo
+    // (inscritos desde la app de "Registro de Afiliados").
+    function obtenerNombreAfiliado(data) {
+        if (typeof data === 'string') return data;
+        if (data && typeof data === 'object') {
+            return [data.nombre, data.paterno, data.materno].filter(Boolean).join(' ') || '(sin nombre)';
+        }
+        return '(sin nombre)';
+    }
+
+    function obtenerDetalleAfiliado(data) {
+        if (data && typeof data === 'object') {
+            const partes = [];
+            if (data.ci) partes.push(`CI: ${data.ci}`);
+            if (data.ruta) partes.push(data.ruta);
+            if (data.zona) partes.push(data.zona);
+            return partes.join(' · ');
+        }
+        return '';
+    }
+
+    function mostrarToast(mensaje) {
+        toast.textContent = mensaje;
+        toast.classList.add('mostrar');
+        setTimeout(() => toast.classList.remove('mostrar'), 1800);
+    }
+
+    // Lee el estado de un registro, con compatibilidad hacia atrás para
+    // registros antiguos guardados solo con el booleano "presente".
+    function obtenerEstado(registro) {
+        if (!registro) return 'ausente';
+        if (registro.estado) return registro.estado;
+        return registro.presente ? 'presente' : 'ausente';
+    }
+
+    // Fecha actualmente vista (por defecto hoy)
+    inputFecha.value = formatearFechaLocal(new Date());
+
+    let afiliados = {};       // { id: dataAfiliado }
+    let asistenciaDia = {};   // { id: { presente, hora } }
+    let unsubscribeAsistencia = null;
+
+    function suscribirAsistencia(fecha) {
+        if (unsubscribeAsistencia) unsubscribeAsistencia();
+        const asistenciaRef = ref(db, `asistencia/${fecha}`);
+        unsubscribeAsistencia = onValue(asistenciaRef, (snapshot) => {
+            asistenciaDia = snapshot.val() || {};
+            renderizar();
+        }, (error) => {
+            console.error(error);
+            estadoConexion.textContent = "⚠ Sin conexión a la base de datos";
+        });
+    }
+
+    function renderizar() {
+        const texto = inputBuscar.value.toLowerCase();
+        const ids = Object.keys(afiliados).filter(id => {
+            const nombre = obtenerNombreAfiliado(afiliados[id]);
+            const ci = (afiliados[id] && afiliados[id].ci) || '';
+            return `${nombre} ${ci}`.toLowerCase().includes(texto);
+        });
+
+        numTotal.textContent = Object.keys(afiliados).length;
+
+        let presentesCount = 0, permisosCount = 0, ausentesCount = 0;
+        Object.keys(afiliados).forEach(id => {
+            const estado = obtenerEstado(asistenciaDia[id]);
+            if (estado === 'presente') presentesCount++;
+            else if (estado === 'permiso') permisosCount++;
+            else ausentesCount++;
+        });
+        numPresentes.textContent = presentesCount;
+        numPermisos.textContent = permisosCount;
+        numAusentes.textContent = ausentesCount;
+
+        if (ids.length === 0) {
+            listaDiv.innerHTML = `<div class="sin-afiliados">${Object.keys(afiliados).length === 0 ? 'Todavía no hay afiliados registrados.' : 'No se encontraron afiliados con esa búsqueda.'}</div>`;
+            return;
+        }
+
+        listaDiv.innerHTML = ids.map(id => {
+            const nombre = obtenerNombreAfiliado(afiliados[id]);
+            const detalle = obtenerDetalleAfiliado(afiliados[id]);
+            const registro = asistenciaDia[id];
+            const estado = obtenerEstado(registro);
+            const hora = (registro && registro.hora) || '';
+            const motivo = (registro && registro.motivo) || '';
+
+            let extra = '';
+            if (estado === 'presente' && hora) extra = 'Marcado ' + hora;
+            if (estado === 'permiso') extra = 'Con permiso' + (hora ? ' desde ' + hora : '') + (motivo ? ': ' + motivo : '');
+
+            return `
+            <div class="fila-afiliado ${estado}">
+                <div class="info-afiliado">
+                    <div class="nombre">${nombre}</div>
+                    <div class="detalle">${detalle}${extra ? (detalle ? ' · ' : '') + extra : ''}</div>
+                </div>
+                <div class="segmentado" data-id="${id}">
+                    <button data-estado="presente" class="${estado === 'presente' ? 'activo estado-presente' : ''}">Present.</button>
+                    <button data-estado="permiso" class="${estado === 'permiso' ? 'activo estado-permiso' : ''}">Permiso</button>
+                    <button data-estado="ausente" class="${estado === 'ausente' ? 'activo estado-ausente' : ''}">Ausente</button>
+                </div>
+            </div>`;
+        }).join('');
+
+        listaDiv.querySelectorAll('.segmentado button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.parentElement.getAttribute('data-id');
+                marcarAsistencia(id, this.getAttribute('data-estado'));
+            });
+        });
+    }
+
+    function marcarAsistencia(id, estado) {
+        const fecha = inputFecha.value;
+        let valor;
+
+        if (estado === 'permiso') {
+            const motivo = prompt("Motivo del permiso (opcional):", (asistenciaDia[id] && asistenciaDia[id].motivo) || '');
+            if (motivo === null) return; // canceló el diálogo, no cambia nada
+            valor = { estado: 'permiso', hora: horaActual(), motivo: motivo.trim() };
+        } else if (estado === 'presente') {
+            valor = { estado: 'presente', hora: horaActual(), motivo: '' };
+        } else {
+            valor = { estado: 'ausente', hora: null, motivo: '' };
+        }
+
+        // Actualiza caché local al instante para que la interfaz responda ya
+        asistenciaDia[id] = valor;
+        renderizar();
+
+        set(ref(db, `asistencia/${fecha}/${id}`), valor)
+            .catch(err => {
+                console.error(err);
+                estadoConexion.textContent = "⚠ No se pudo guardar, revisa tu conexión";
+            });
+    }
+
+    function marcarTodos(estado) {
+        const fecha = inputFecha.value;
+        const actualizaciones = {};
+        const hora = estado === 'ausente' ? null : horaActual();
+
+        Object.keys(afiliados).forEach(id => {
+            const valor = { estado: estado, hora: hora, motivo: '' };
+            asistenciaDia[id] = valor;
+            actualizaciones[`asistencia/${fecha}/${id}`] = valor;
+        });
+
+        renderizar();
+
+        const mensajes = {
+            presente: "Todos marcados presentes ✓",
+            permiso: "Todos marcados con permiso ✓",
+            ausente: "Todos marcados ausentes ✓"
+        };
+
+        update(ref(db), actualizaciones)
+            .then(() => mostrarToast(mensajes[estado]))
+            .catch(err => {
+                console.error(err);
+                mostrarToast("⚠ No se pudo guardar");
+            });
+    }
+
+    // --- Escucha en tiempo real de Firebase ---
+
+    onValue(afiliadosRef, (snapshot) => {
+        afiliados = snapshot.val() || {};
+        estadoConexion.textContent = "Conectado ✓ (sincronizado en la nube)";
+        renderizar();
+    }, (error) => {
+        console.error(error);
+        estadoConexion.textContent = "⚠ Sin conexión a la base de datos";
+    });
+
+    suscribirAsistencia(inputFecha.value);
+
+    // --- Eventos de la interfaz ---
+
+    inputFecha.addEventListener('change', function() {
+        suscribirAsistencia(this.value);
+    });
+
+    btnHoy.addEventListener('click', function() {
+        inputFecha.value = formatearFechaLocal(new Date());
+        suscribirAsistencia(inputFecha.value);
+    });
+
+    inputBuscar.addEventListener('keyup', renderizar);
+
+    document.getElementById('btnTodosPresentes').addEventListener('click', function() {
+        if (Object.keys(afiliados).length === 0) {
+            mostrarToast("No hay afiliados para marcar");
+            return;
+        }
+        if (confirm("¿Marcar a todos los afiliados como presentes hoy?")) {
+            marcarTodos('presente');
+        }
+    });
+
+    document.getElementById('btnTodosPermiso').addEventListener('click', function() {
+        if (Object.keys(afiliados).length === 0) {
+            mostrarToast("No hay afiliados para marcar");
+            return;
+        }
+        if (confirm("¿Marcar a todos los afiliados con permiso hoy?")) {
+            marcarTodos('permiso');
+        }
+    });
+
+    document.getElementById('btnTodosAusentes').addEventListener('click', function() {
+        if (Object.keys(afiliados).length === 0) {
+            mostrarToast("No hay afiliados para marcar");
+            return;
+        }
+        if (confirm("¿Marcar a todos los afiliados como ausentes hoy?")) {
+            marcarTodos('ausente');
+        }
+    });
+</script>
+
+</body>
+</html>

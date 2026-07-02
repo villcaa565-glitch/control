@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Quincenal - Delizia</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        body {
+            background-color: #f3f4f6;
+            padding: 10px;
+            color: #333;
+        }
+        @media (max-width: 380px) {
+            body { padding: 6px; }
+            .container { padding: 10px; }
+        }
+        .container {
+            max-width: 100%;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-top: 5px solid #004b93;
+        }
+        h2 {
+            text-align: center;
+            color: #004b93;
+            margin-bottom: 5px;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        .sub {
+            text-align: center;
+            color: #da291c;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        .estado-conexion {
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 10px;
+            color: #888;
+        }
+        .config-quincena, .config-afiliado, .config-precio {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .config-precio {
+            border: 1px solid #cdeedb;
+            background-color: #f2fbf6;
+        }
+        .config-quincena label, .config-afiliado label, .config-precio label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #004b93;
+        }
+        .config-precio label {
+            color: #14713b;
+        }
+        .config-quincena input, .config-afiliado input {
+            padding: 10px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 16px; /* evita el zoom automático de iOS al enfocar */
+        }
+        .fila-precio {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .fila-precio span {
+            font-weight: bold;
+            color: #14713b;
+        }
+        .fila-precio input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 8px;
+            border: 1px solid #a9dcc0;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #14713b;
+        }
+        .fila-agregar {
+            display: flex;
+            gap: 8px;
+        }
+        .fila-agregar input {
+            flex: 1;
+            min-width: 0;
+        }
+        .btn-agregar {
+            padding: 12px 16px;
+            background-color: #004b93;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 15px;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1900px;
+            font-size: 13px;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            text-align: center;
+            padding: 6px 3px;
+        }
+        th {
+            background-color: #005cb9;
+            color: white;
+            font-weight: 600;
+        }
+        .fecha-header {
+            font-size: 11px;
+            display: block;
+            color: #ffdad6;
+            font-weight: normal;
+        }
+        th:first-child, td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #f8f9fa;
+            font-weight: bold;
+            text-align: left;
+            padding-left: 10px;
+            min-width: 160px;
+            z-index: 1;
+            border-right: 2px solid #004b93;
+        }
+        th:first-child {
+            background-color: #004b93;
+            z-index: 2;
+        }
+        td input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 16px; /* evita el zoom automático de iOS al enfocar */
+            padding: 10px 0;
+            font-weight: 500;
+        }
+        td input:focus {
+            outline: 2px solid #da291c;
+            background-color: #fff5f5;
+        }
+        .total-col {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #da291c;
+            min-width: 90px;
+        }
+        .monto-col {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+            min-width: 95px;
+        }
+        .descuento-col {
+            background-color: #fff5f5;
+            min-width: 85px;
+        }
+        .descuento-col input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 16px; /* evita el zoom automático de iOS al enfocar */
+            padding: 10px 0;
+            font-weight: 500;
+            color: #da291c;
+        }
+        .descuento-col input:focus {
+            outline: 2px solid #da291c;
+            background-color: #ffe8e8;
+        }
+        .desctotal-col {
+            background-color: #fdeaea;
+            font-weight: bold;
+            color: #da291c;
+            min-width: 90px;
+        }
+        .pagar-col {
+            background-color: #eafaf1;
+            font-weight: bold;
+            color: #14713b;
+            min-width: 100px;
+        }
+        .sin-afiliados {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background-color: #1a8f4c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:active {
+            background-color: #14713b;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1a8f4c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        .toast.mostrar {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Delizia</h2>
+    <div class="sub">Pago Quincenal - Sincronizado en la Nube</div>
+    <div class="estado-conexion" id="estadoConexion">Conectando...</div>
+
+    <!-- Precio por litro -->
+    <div class="config-precio">
+        <label for="precioLitro">Precio por litro de leche:</label>
+        <div class="fila-precio">
+            <span>Bs</span>
+            <input type="number" id="precioLitro" step="0.01" min="0" value="4.50">
+        </div>
+    </div>
+
+   
+
+    <!-- Selector de fecha para mover la vista de la quincena -->
+    <div class="config-quincena">
+        <label for="fechaInicio">Ver quincena a partir del día:</label>
+        <input type="date" id="fechaInicio">
+    </div>
+
+    <p style="font-size:11px; color:#888; margin-bottom:8px; text-align:center;">
+        Los descuentos de agua, luz, faltas/multas y otros se aplican por quincena y se restan del monto bruto para calcular lo que se paga a cada afiliado.
+    </p>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr id="encabezadoDias">
+                    <th>Afiliado</th>
+                    <!-- Los 15 días dinámicos se insertan aquí -->
+                    <th>Total Litros</th>
+                    <th>Monto Bruto</th>
+                    <th>💧 Agua</th>
+                    <th>💡 Luz</th>
+                    <th>⚠ Faltas/Multas</th>
+                    <th>Otros</th>
+                    <th>Desc. Total</th>
+                    <th>A Pagar</th>
+                </tr>
+            </thead>
+            <tbody id="tablaCuerpo">
+                <!-- Filas de afiliados -->
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn-primary" id="btnGuardar">Guardar</button>
+</div>
+
+<div class="toast" id="toast">Guardado ✓</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+        getDatabase, ref, push, set, update, onValue
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    // Mismo proyecto de Firebase que las otras apps de Delizia, así que
+    // usa exactamente los mismos afiliados y los mismos litros ya cargados.
+    const firebaseConfig = {
+        apiKey: "AIzaSyDYMmBXRRmZwi60b9vCVZNPQFFByKhzieQ",
+        authDomain: "base-de-datos-748e3.firebaseapp.com",
+        databaseURL: "https://base-de-datos-748e3-default-rtdb.firebaseio.com",
+        projectId: "base-de-datos-748e3",
+        storageBucket: "base-de-datos-748e3.firebasestorage.app",
+        messagingSenderId: "355021101960",
+        appId: "1:355021101960:web:93f643464410fa3573f83d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const afiliadosRef = ref(db, 'afiliados');            // { id: "Nombre" | {nombre,paterno,materno,...} }
+    const registrosRef = ref(db, 'registros');             // { id: { "AAAA-MM-DD": "litros" } }
+    const precioLitroRef = ref(db, 'configuracion/precioLitro'); // número, compartido entre dispositivos
+    // Descuentos por quincena: descuentos/{fechaInicioQuincena}/{id} = { agua, luz, multas, otros }
+    // Se guardan por quincena (no por día) porque son montos fijos del período completo.
+
+    const estadoConexion = document.getElementById('estadoConexion');
+    const totalDias = 15;
+    const tablaCuerpo = document.getElementById('tablaCuerpo');
+    const encabezadoDias = document.getElementById('encabezadoDias');
+    const inputFechaInicio = document.getElementById('fechaInicio');
+    const inputNuevoAfiliado = document.getElementById('nombreNuevoAfiliado');
+    const inputPrecioLitro = document.getElementById('precioLitro');
+    const toast = document.getElementById('toast');
+
+    // Helper: formatea un objeto Date a "AAAA-MM-DD" usando componentes LOCALES
+    // (evitar toISOString(), que convierte a UTC y puede desfasar el día
+    // según la hora y el huso horario del usuario).
+    function formatearFechaLocal(fecha) {
+        const yyyy = fecha.getFullYear();
+        const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+        const dd = String(fecha.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Los afiliados pueden llegar como texto simple (altas rápidas) o como
+    // objeto completo (inscritos desde la app de "Registro de Afiliados").
+    function obtenerNombreAfiliado(data) {
+        if (typeof data === 'string') return data;
+        if (data && typeof data === 'object') {
+            return [data.nombre, data.paterno, data.materno].filter(Boolean).join(' ') || '(sin nombre)';
+        }
+        return '(sin nombre)';
+    }
+
+    function mostrarToast(mensaje) {
+        toast.textContent = mensaje;
+        toast.classList.add('mostrar');
+        setTimeout(() => toast.classList.remove('mostrar'), 1800);
+    }
+
+    // Fecha de visualización (local a cada dispositivo)
+    let fechaVista = localStorage.getItem('deliziaFechaVista');
+    if (!fechaVista) {
+        fechaVista = formatearFechaLocal(new Date());
+        localStorage.setItem('deliziaFechaVista', fechaVista);
+    }
+    inputFechaInicio.value = fechaVista;
+
+    // Estado en memoria, alimentado en tiempo real desde Firebase
+    let afiliados = {};       // { id: "Nombre" | {...} }
+    let dbLeche = {};         // { id: { "AAAA-MM-DD": "litros" } }
+    let dbDescuentos = {};    // { id: { agua, luz, multas, otros } } para la quincena actualmente vista
+    let unsubscribeDescuentos = null;
+    let precioLitro = 4.50;   // Bs por litro, compartido vía Firebase
+    let fechasActuales = [];
+    let estructuraLista = false; // evita reconstruir la tabla antes de tener afiliados
+
+    function calcularFechasQuincena() {
+        fechasActuales = [];
+        const fechaBase = new Date(inputFechaInicio.value + "T00:00:00");
+
+        for (let i = 0; i < totalDias; i++) {
+            const nuevaFecha = new Date(fechaBase);
+            nuevaFecha.setDate(fechaBase.getDate() + i);
+            fechasActuales.push({
+                objetoFecha: nuevaFecha,
+                isoString: formatearFechaLocal(nuevaFecha)
+            });
+        }
+    }
+
+    // Lee los 4 descuentos de un afiliado para la quincena actual, con 0 por defecto
+    function obtenerDescuento(id, campo) {
+        const valor = dbDescuentos[id] && dbDescuentos[id][campo];
+        return valor ? parseFloat(valor) : 0;
+    }
+
+    function sumaDescuentos(id) {
+        return obtenerDescuento(id, 'agua') + obtenerDescuento(id, 'luz') +
+               obtenerDescuento(id, 'multas') + obtenerDescuento(id, 'otros');
+    }
+
+    // Los descuentos se guardan por quincena (según la fecha de inicio elegida),
+    // así que hay que re-suscribirse cada vez que cambia el período visto.
+    function suscribirDescuentos(fechaInicio) {
+        if (unsubscribeDescuentos) unsubscribeDescuentos();
+        const descuentosRef = ref(db, `descuentos/${fechaInicio}`);
+        unsubscribeDescuentos = onValue(descuentosRef, (snapshot) => {
+            dbDescuentos = snapshot.val() || {};
+            if (estructuraLista) construirTabla();
+        }, (error) => {
+            console.error(error);
+            estadoConexion.textContent = "⚠ Sin conexión a la base de datos";
+        });
+    }
+
+    function generarCabeceras() {
+        // Deja las últimas 8 columnas fijas (Total Litros, Monto Bruto, Agua,
+        // Luz, Faltas/Multas, Otros, Desc. Total y A Pagar) y limpia solo los
+        // días de en medio.
+        while (encabezadoDias.children.length > 9) {
+            encabezadoDias.removeChild(encabezadoDias.children[1]);
+        }
+
+        const nombresDiasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+        const columnaFinal = encabezadoDias.children[encabezadoDias.children.length - 8];
+
+        fechasActuales.forEach(f => {
+            const th = document.createElement('th');
+            const diaSemana = nombresDiasSemana[f.objetoFecha.getDay()];
+            const diaMes = f.objetoFecha.getDate();
+            const mes = f.objetoFecha.getMonth() + 1;
+            const anio = f.objetoFecha.getFullYear();
+
+            th.innerHTML = `${diaSemana}<span class="fecha-header">${diaMes}/${mes}/${anio}</span>`;
+            encabezadoDias.insertBefore(th, columnaFinal);
+        });
+    }
+
+    function construirTabla() {
+        tablaCuerpo.innerHTML = "";
+
+        const idsAfiliados = Object.keys(afiliados);
+
+        if (idsAfiliados.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = totalDias + 9;
+            td.className = "sin-afiliados";
+            td.textContent = "Todavía no hay afiliados inscritos. Agrega uno arriba.";
+            tr.appendChild(td);
+            tablaCuerpo.appendChild(tr);
+            return;
+        }
+
+        idsAfiliados.forEach(id => {
+            const nombre = obtenerNombreAfiliado(afiliados[id]);
+            const tr = document.createElement('tr');
+
+            const tdAfi = document.createElement('td');
+            tdAfi.textContent = nombre;
+            tr.appendChild(tdAfi);
+
+            let sumaQuincena = 0;
+            const registrosAfiliado = dbLeche[id] || {};
+
+            fechasActuales.forEach(f => {
+                const tdDia = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = "number";
+                input.step = "0.1";
+                input.min = "0"; // evita registrar litros negativos
+                input.placeholder = "0";
+
+                const valorFecha = registrosAfiliado[f.isoString] || "";
+                input.value = valorFecha;
+
+                if (valorFecha) {
+                    sumaQuincena += parseFloat(valorFecha);
+                }
+
+                input.addEventListener('input', function() {
+                    if (this.value !== "" && parseFloat(this.value) < 0) {
+                        this.value = "0";
+                    }
+                    // Actualiza caché local al instante (para que el total no espere la red)
+                    if (!dbLeche[id]) dbLeche[id] = {};
+                    dbLeche[id][f.isoString] = this.value;
+
+                    // Escribe a Firebase por fecha exacta, sin tocar los demás días
+                    set(ref(db, `registros/${id}/${f.isoString}`), this.value)
+                        .catch(err => {
+                            console.error(err);
+                            estadoConexion.textContent = "⚠ No se pudo guardar, revisa tu conexión";
+                        });
+
+                    actualizarTotales();
+                });
+
+                tdDia.appendChild(input);
+                tr.appendChild(tdDia);
+            });
+
+            const tdTotal = document.createElement('td');
+            tdTotal.className = "total-col";
+            tdTotal.id = `total-${id}`;
+            tdTotal.textContent = sumaQuincena > 0 ? sumaQuincena.toFixed(1) : "0.0";
+            tr.appendChild(tdTotal);
+
+            const tdMonto = document.createElement('td');
+            tdMonto.className = "monto-col";
+            tdMonto.id = `monto-${id}`;
+            tdMonto.textContent = `Bs ${(sumaQuincena * precioLitro).toFixed(2)}`;
+            tr.appendChild(tdMonto);
+
+            // Celdas editables de descuentos: agua, luz, faltas/multas y otros
+            ['agua', 'luz', 'multas', 'otros'].forEach(campo => {
+                const tdCampo = document.createElement('td');
+                tdCampo.className = "descuento-col";
+                const inputCampo = document.createElement('input');
+                inputCampo.type = "number";
+                inputCampo.step = "0.01";
+                inputCampo.min = "0";
+                inputCampo.placeholder = "0";
+                const valorCampo = obtenerDescuento(id, campo);
+                inputCampo.value = valorCampo > 0 ? valorCampo : "";
+
+                inputCampo.addEventListener('change', function() {
+                    let valor = parseFloat(this.value);
+                    if (isNaN(valor) || valor < 0) valor = 0;
+                    this.value = valor > 0 ? valor : "";
+
+                    if (!dbDescuentos[id]) dbDescuentos[id] = {};
+                    dbDescuentos[id][campo] = valor;
+
+                    set(ref(db, `descuentos/${inputFechaInicio.value}/${id}/${campo}`), valor)
+                        .then(() => actualizarTotales())
+                        .catch(err => {
+                            console.error(err);
+                            estadoConexion.textContent = "⚠ No se pudo guardar, revisa tu conexión";
+                        });
+                });
+
+                tdCampo.appendChild(inputCampo);
+                tr.appendChild(tdCampo);
+            });
+
+            const tdDescTotal = document.createElement('td');
+            tdDescTotal.className = "desctotal-col";
+            tdDescTotal.id = `desctotal-${id}`;
+            tdDescTotal.textContent = `Bs ${sumaDescuentos(id).toFixed(2)}`;
+            tr.appendChild(tdDescTotal);
+
+            const tdPagar = document.createElement('td');
+            tdPagar.className = "pagar-col";
+            tdPagar.id = `pagar-${id}`;
+            tdPagar.textContent = `Bs ${(sumaQuincena * precioLitro - sumaDescuentos(id)).toFixed(2)}`;
+            tr.appendChild(tdPagar);
+
+            tablaCuerpo.appendChild(tr);
+        });
+    }
+
+    function actualizarTotales() {
+        Object.keys(afiliados).forEach(id => {
+            let suma = 0;
+            const registrosAfiliado = dbLeche[id] || {};
+            fechasActuales.forEach(f => {
+                if (registrosAfiliado[f.isoString]) {
+                    suma += parseFloat(registrosAfiliado[f.isoString]);
+                }
+            });
+
+            const celdaTotal = document.getElementById(`total-${id}`);
+            if (celdaTotal) {
+                celdaTotal.textContent = suma > 0 ? suma.toFixed(1) : "0.0";
+            }
+
+            const bruto = suma * precioLitro;
+            const descuentos = sumaDescuentos(id);
+
+            const celdaMonto = document.getElementById(`monto-${id}`);
+            if (celdaMonto) {
+                celdaMonto.textContent = `Bs ${bruto.toFixed(2)}`;
+            }
+
+            const celdaDescTotal = document.getElementById(`desctotal-${id}`);
+            if (celdaDescTotal) {
+                celdaDescTotal.textContent = `Bs ${descuentos.toFixed(2)}`;
+            }
+
+            const celdaPagar = document.getElementById(`pagar-${id}`);
+            if (celdaPagar) {
+                celdaPagar.textContent = `Bs ${(bruto - descuentos).toFixed(2)}`;
+            }
+        });
+    }
+
+    function renderizarTodo() {
+        calcularFechasQuincena();
+        generarCabeceras();
+        construirTabla();
+    }
+
+    // --- Escucha en tiempo real de Firebase ---
+
+    onValue(afiliadosRef, (snapshot) => {
+        afiliados = snapshot.val() || {};
+        estructuraLista = true;
+        renderizarTodo();
+        estadoConexion.textContent = "Conectado ✓ (sincronizado en la nube)";
+    }, (error) => {
+        console.error(error);
+        estadoConexion.textContent = "⚠ Sin conexión a la base de datos";
+    });
+
+    onValue(registrosRef, (snapshot) => {
+        dbLeche = snapshot.val() || {};
+        if (estructuraLista) actualizarTotales();
+    });
+
+    // Los descuentos (agua, luz, faltas/multas, otros) están ligados a la
+    // quincena que se está viendo, así que se suscriben aparte.
+    suscribirDescuentos(inputFechaInicio.value);
+
+    // El precio por litro también se sincroniza: si alguien lo cambia desde
+    // otro teléfono, aquí se actualiza solo y recalcula los montos.
+    onValue(precioLitroRef, (snapshot) => {
+        const valor = snapshot.val();
+        if (valor !== null && valor !== undefined) {
+            precioLitro = parseFloat(valor);
+            inputPrecioLitro.value = precioLitro.toFixed(2);
+            if (estructuraLista) actualizarTotales();
+        } else {
+            // Todavía no existe en Firebase: sube el valor por defecto (4.50)
+            set(precioLitroRef, precioLitro);
+        }
+    });
+
+    // --- Eventos de la interfaz ---
+
+    inputFechaInicio.addEventListener('change', function() {
+        localStorage.setItem('deliziaFechaVista', this.value);
+        suscribirDescuentos(this.value);
+        renderizarTodo();
+    });
+
+    inputPrecioLitro.addEventListener('change', function() {
+        let valor = parseFloat(this.value);
+        if (isNaN(valor) || valor < 0) {
+            valor = 0;
+        }
+        precioLitro = valor;
+        this.value = valor.toFixed(2);
+        set(precioLitroRef, valor)
+            .then(() => {
+                actualizarTotales();
+                mostrarToast("Precio actualizado ✓");
+            })
+            .catch(err => {
+                console.error(err);
+                mostrarToast("⚠ No se pudo actualizar el precio");
+            });
+    });
+
+    document.getElementById('btnAgregarAfiliado').addEventListener('click', function() {
+        const nombre = inputNuevoAfiliado.value.trim();
+        if (!nombre) {
+            mostrarToast("Escribe un nombre primero");
+            return;
+        }
+        const nuevoRef = push(afiliadosRef);
+        set(nuevoRef, { nombre: nombre, paterno: '', materno: '' })
+            .then(() => {
+                inputNuevoAfiliado.value = "";
+                mostrarToast(`"${nombre}" inscrito ✓`);
+            })
+            .catch(err => {
+                console.error(err);
+                mostrarToast("⚠ No se pudo inscribir");
+            });
+    });
+
+    inputNuevoAfiliado.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('btnAgregarAfiliado').click();
+        }
+    });
+
+    document.getElementById('btnGuardar').addEventListener('click', function() {
+        // Los litros ya se guardan en Firebase en cada tecla; este botón
+        // reafirma el guardado completo de lo que se ve en pantalla y confirma al usuario.
+        const actualizaciones = {};
+        Object.keys(afiliados).forEach(id => {
+            fechasActuales.forEach(f => {
+                const valor = (dbLeche[id] && dbLeche[id][f.isoString]) || "";
+                actualizaciones[`registros/${id}/${f.isoString}`] = valor;
+            });
+        });
+        update(ref(db), actualizaciones)
+            .then(() => mostrarToast("Guardado ✓"))
+            .catch(err => {
+                console.error(err);
+                mostrarToast("⚠ No se pudo guardar");
+            });
+    });
+</script>
+
+</body>
+</html>

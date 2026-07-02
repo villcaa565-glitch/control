@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DELIZIA - Registro de Afiliados</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI', Arial, sans-serif;
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation;
+}
+
+body{
+background:#f3f4f6;
+}
+
+header{
+background:#004b93;
+color:white;
+padding:18px;
+text-align:center;
+font-size:24px;
+font-weight:bold;
+box-shadow:0 2px 10px rgba(0,0,0,.3);
+}
+
+header span{
+display:block;
+font-size:14px;
+font-weight:400;
+color:#da291c;
+text-transform:uppercase;
+}
+
+.total-bar{
+background:#004b93;
+color:white;
+padding:10px;
+text-align:center;
+font-size:18px;
+font-weight:bold;
+border-top:1px solid rgba(255,255,255,.25);
+}
+
+.estado-conexion{
+text-align:center;
+font-size:12px;
+padding:6px;
+color:#888;
+background:#f8f9fa;
+}
+
+.container{
+padding:15px;
+padding-bottom:90px;
+}
+
+.card{
+
+background:white;
+border-radius:8px;
+padding:18px;
+margin-bottom:18px;
+box-shadow:0 4px 12px rgba(0,0,0,.08);
+border-top:5px solid #004b93;
+
+}
+
+.card h2{
+
+color:#004b93;
+margin-bottom:15px;
+font-size:20px;
+
+}
+
+label{
+
+display:block;
+margin-top:10px;
+margin-bottom:5px;
+font-weight:600;
+color:#333;
+
+}
+
+input,textarea,select{
+
+width:100%;
+padding:13px 12px;
+border:1px solid #cbd5e1;
+border-radius:4px;
+font-size:16px; /* evita el zoom automático de iOS al enfocar */
+
+}
+
+textarea{
+
+resize:none;
+height:80px;
+
+}
+
+button{
+
+width:100%;
+padding:15px;
+margin-top:15px;
+border:none;
+border-radius:6px;
+font-size:17px;
+font-weight:bold;
+cursor:pointer;
+
+}
+
+.guardar{
+
+background:#004b93;
+color:white;
+
+}
+
+.limpiar{
+
+background:#f8f9fa;
+color:#004b93;
+border:1px solid #cbd5e1;
+
+}
+
+.lista{
+
+margin-top:20px;
+
+}
+
+.registro{
+
+background:#f8f9fa;
+padding:12px;
+border:1px solid #e2e8f0;
+border-radius:6px;
+margin-bottom:10px;
+
+}
+
+.registro h3{
+
+color:#004b93;
+
+}
+
+footer{
+
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+height:65px;
+background:white;
+display:flex;
+justify-content:space-around;
+align-items:center;
+box-shadow:0 -2px 10px rgba(0,0,0,.2);
+
+}
+
+footer div{
+
+text-align:center;
+font-size:13px;
+color:#004b93;
+
+}
+
+footer span{
+
+display:block;
+font-size:24px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+🥛 DELIZIA
+
+<span>Sistema de Registro de Afiliados</span>
+
+</header>
+
+<div class="total-bar">
+👥 Total de Afiliados: <span id="total">0</span>
+</div>
+
+<div class="estado-conexion" id="estadoConexion">Conectando...</div>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Nuevo Afiliado</h2>
+
+<label>Nombres</label>
+<input id="nombre">
+
+<label>Apellido Paterno</label>
+<input id="paterno">
+
+<label>Apellido Materno</label>
+<input id="materno">
+
+<label>Carnet de Identidad</label>
+<input id="ci">
+
+<label>Fecha de Nacimiento</label>
+<input type="date" id="fecha">
+
+<label>Teléfono</label>
+<input id="telefono">
+
+<label>Dirección</label>
+<input id="direccion">
+
+<label>Zona</label>
+<input id="zona">
+
+<label>Ciudad</label>
+<input id="ciudad">
+
+<label>Ruta de Reparto</label>
+<select id="ruta">
+<option>Ruta 1</option>
+<option>Ruta 2</option>
+<option>Ruta 3</option>
+<option>Ruta 4</option>
+</select>
+
+<label>Observaciones</label>
+<textarea id="obs"></textarea>
+
+<button class="guardar" onclick="guardar()">
+💾 GUARDAR AFILIADO
+</button>
+
+<button class="limpiar" onclick="limpiar()">
+🧹 LIMPIAR
+</button>
+
+</div>
+
+<div class="card lista">
+    <input
+id="buscar"
+placeholder="🔍 Buscar por nombre o CI"
+onkeyup="buscar()">
+
+<h2>Registros</h2>
+
+<div id="lista">
+
+<div class="registro">
+
+<h3>No existen registros</h3>
+
+<p>Los afiliados aparecerán aquí.</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<footer>
+
+<div>
+<span>🏠</span>
+Inicio
+</div>
+
+<div>
+<span>➕</span>
+Nuevo
+</div>
+
+<div>
+<span>📋</span>
+Registros
+</div>
+
+<div>
+<span>⚙</span>
+Ajustes
+</div>
+
+</footer>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+    getDatabase, ref, set, remove, onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// Mismo proyecto de Firebase que usa la app de litros, para que los
+// afiliados inscritos aquí aparezcan allá automáticamente.
+const firebaseConfig = {
+    apiKey: "AIzaSyDYMmBXRRmZwi60b9vCVZNPQFFByKhzieQ",
+    authDomain: "base-de-datos-748e3.firebaseapp.com",
+    databaseURL: "https://base-de-datos-748e3-default-rtdb.firebaseio.com",
+    projectId: "base-de-datos-748e3",
+    storageBucket: "base-de-datos-748e3.firebasestorage.app",
+    messagingSenderId: "355021101960",
+    appId: "1:355021101960:web:93f643464410fa3573f83d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const afiliadosRef = ref(db, 'afiliados'); // { id: { nombre, paterno, materno, ci, ... } }
+
+const estadoConexion = document.getElementById('estadoConexion');
+const totalSpan = document.getElementById('total');
+
+// Caché local en memoria, alimentada en tiempo real por Firebase.
+// La clave (id) se genera a partir del CI, así no se puede duplicar
+// por accidente a la misma persona.
+let afiliados = {};
+
+function idDesdeCI(ci) {
+    return ci.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+onValue(afiliadosRef, (snapshot) => {
+    afiliados = snapshot.val() || {};
+    estadoConexion.textContent = "Conectado ✓ (sincronizado en la nube)";
+    mostrar();
+}, (error) => {
+    console.error(error);
+    estadoConexion.textContent = "⚠ Sin conexión a la base de datos";
+});
+
+function renderLista(entradas) {
+    const lista = document.getElementById("lista");
+
+    if (entradas.length === 0) {
+        lista.innerHTML = `
+        <div class="registro">
+        <h3>No existen registros</h3>
+        <p>Los afiliados aparecerán aquí.</p>
+        </div>
+        `;
+        return;
+    }
+
+    lista.innerHTML = entradas.map(([id, a]) => `
+        <div class="registro">
+        <h3>${a.nombre} ${a.paterno} ${a.materno}</h3>
+        <p><b>CI:</b> ${a.ci}</p>
+        <p><b>Teléfono:</b> ${a.telefono || '-'}</p>
+        <p><b>Zona:</b> ${a.zona || '-'}</p>
+        <p><b>Ruta:</b> ${a.ruta || '-'}</p>
+        <button onclick="eliminar('${id}')"
+        style="
+        margin-top:10px;
+        background:#da291c;
+        color:white;
+        border:none;
+        padding:13px;
+        border-radius:6px;
+        width:100%;
+        font-size:15px;
+        font-weight:bold;
+        ">
+        🗑 Eliminar
+        </button>
+        </div>
+    `).join('');
+}
+
+window.buscar = function() {
+    const texto = document.getElementById("buscar").value.toLowerCase();
+    const entradas = Object.entries(afiliados).filter(([id, a]) =>
+        `${a.nombre} ${a.paterno} ${a.materno} ${a.ci}`.toLowerCase().includes(texto)
+    );
+    renderLista(entradas);
+};
+
+window.mostrar = function mostrar() {
+    totalSpan.textContent = Object.keys(afiliados).length;
+
+    const texto = document.getElementById("buscar").value.toLowerCase();
+    const entradas = Object.entries(afiliados).filter(([id, a]) =>
+        `${a.nombre} ${a.paterno} ${a.materno} ${a.ci}`.toLowerCase().includes(texto)
+    );
+    renderLista(entradas);
+};
+
+window.guardar = function() {
+
+    const afiliado = {
+        nombre: document.getElementById("nombre").value.trim(),
+        paterno: document.getElementById("paterno").value.trim(),
+        materno: document.getElementById("materno").value.trim(),
+        ci: document.getElementById("ci").value.trim(),
+        fecha: document.getElementById("fecha").value,
+        telefono: document.getElementById("telefono").value.trim(),
+        direccion: document.getElementById("direccion").value.trim(),
+        zona: document.getElementById("zona").value.trim(),
+        ciudad: document.getElementById("ciudad").value.trim(),
+        ruta: document.getElementById("ruta").value,
+        observacion: document.getElementById("obs").value.trim()
+    };
+
+    if (afiliado.nombre === "" || afiliado.ci === "") {
+        alert("Debe ingresar el nombre y el CI.");
+        return;
+    }
+
+    const id = idDesdeCI(afiliado.ci);
+
+    if (!id) {
+        alert("El CI ingresado no es válido.");
+        return;
+    }
+
+    if (afiliados[id]) {
+        alert("Ya existe un afiliado registrado con ese CI.");
+        return;
+    }
+
+    set(ref(db, `afiliados/${id}`), afiliado)
+        .then(() => {
+            limpiar();
+            alert("Afiliado registrado correctamente.");
+        })
+        .catch(err => {
+            console.error(err);
+            alert("⚠ No se pudo guardar. Revisa tu conexión.");
+        });
+};
+
+window.eliminar = function(id) {
+    if (confirm("¿Eliminar este afiliado?")) {
+        remove(ref(db, `afiliados/${id}`))
+            .catch(err => {
+                console.error(err);
+                alert("⚠ No se pudo eliminar. Revisa tu conexión.");
+            });
+    }
+};
+
+window.limpiar = function() {
+    document.querySelectorAll("input").forEach(e => e.value = "");
+    document.getElementById("obs").value = "";
+    document.getElementById("ruta").selectedIndex = 0;
+};
+
+</script>
+
+</body>
+</html>
